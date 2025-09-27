@@ -5,6 +5,21 @@ from sqlite3 import IntegrityError
 from datetime import datetime
 import os
 
+import os
+import streamlit as st
+
+# --- Modes: checkin (default), dashboard, admin ---
+def get_mode_and_auth():
+    qs = st.query_params
+    mode = (qs.get("mode") or "checkin").lower()  # 'checkin' by default
+    provided_key = qs.get("key") or ""            # ?key=...
+    admin_key = st.secrets.get("ADMIN_KEY", "")
+    is_admin = (mode == "admin" and admin_key and provided_key == admin_key)
+    return mode, is_admin
+
+mode, is_admin = get_mode_and_auth()
+
+
 DB_PATH = 'checkins.db'
 ROOMS_CSV = 'rooms.csv'
 
@@ -83,7 +98,20 @@ rooms_df = load_rooms()
 
 st.title("Emerging Careers Summit — Room Check-in & Occupancy")
 
-tabs = st.tabs(["📝 Check-in", "📊 Dashboard", "🔗 QR Links", "⚙️ Admin"])
+# Build the allowed tabs based on mode
+tab_labels = []
+if mode == "checkin":
+    tab_labels = ["📝 Check-in"]  # students see only this
+elif mode == "dashboard":
+    tab_labels = ["📝 Check-in", "📊 Dashboard", "🔗 QR Links"]  # staff view; no Admin
+elif mode == "admin" and is_admin:
+    tab_labels = ["📝 Check-in", "📊 Dashboard", "🔗 QR Links", "⚙️ Admin"]  # full access
+else:
+    # Unknown/unauthorized -> fall back to Check-in only
+    tab_labels = ["📝 Check-in"]
+
+tabs = st.tabs(tab_labels)
+
 
 with tabs[0]:
     st.subheader("Attendee Check-in")
@@ -136,7 +164,8 @@ with tabs[2]:
     if not rooms_df.empty:
         rows = []
         for _, r in rooms_df.iterrows():
-            link = f"{base_hint.strip().rstrip('/')}/?room={r['room_code']}&session={r['session']}"
+            # Student-facing link includes mode=checkin so they only see the Check-in page
+            link = f"{base_hint.strip().rstrip('/')}/?room={r['room_code']}&session={r['session']}&mode=checkin"    
             rows.append((r['room_code'], r['session'], r['max_capacity'], link))
         st.dataframe(pd.DataFrame(rows, columns=["Room","Session","Max","Check-in URL"]), use_container_width=True, hide_index=True)
 
@@ -151,3 +180,19 @@ with tabs[3]:
         except FileNotFoundError:
             init_db()
             st.success("Database initialized (no prior data found).")
+if "⚙️ Admin" in tab_labels:
+    with tabs[tab_labels.index("⚙️ Admin")]:
+        if not is_admin:
+            st.error("Unauthorized (ADMIN mode requires a valid key).")
+        else:
+            st.subheader("Admin")
+            st.write("• Edit rooms.csv to change rooms/sessions/capacities.\n• Delete checkins.db to reset data.")
+            if st.button("Clear database (delete all check-ins)"):
+                try:
+                    os.remove(DB_PATH)
+                    init_db()
+                    st.success("Database cleared.")
+                except FileNotFoundError:
+                    init_db()
+                    st.success("Database initialized (no prior data found).")
+
