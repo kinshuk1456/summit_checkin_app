@@ -17,8 +17,18 @@ ROOMS_CSV = "rooms.csv"
 # Turn on ONLY if you've added gspread/google-auth to requirements.txt and set secrets
 USE_SHEETS = False  # set True after secrets + deps are configured
 
-# Banner image shown under the title on the Check-in tab (Google Forms style)
-BANNER_URL = "https://raw.githubusercontent.com/kinshuk1456/summit_checkin_app/main/assets/bg.png"
+# Banner image (Google Forms style) — prefer local file, fallback to raw GitHub
+BANNER_LOCAL = "assets/bg.png"
+BANNER_RAW   = "https://raw.githubusercontent.com/kinshuk1456/summit_checkin_app/main/assets/bg.png"
+
+def show_banner():
+    """Display the banner image right under the Check-in heading."""
+    # Prefer local file (works even if internet is blocked)
+    if os.path.exists(BANNER_LOCAL):
+        st.image(BANNER_LOCAL, use_container_width=True)
+    else:
+        # Fallback to raw GitHub (add cache-buster to avoid stale caching)
+        st.image(f"{BANNER_RAW}?v=1", use_container_width=True)
 
 # ---------------------- Roles / modes ----------------------
 def get_mode_and_auth():
@@ -42,7 +52,7 @@ if mode == "checkin":
 # ---------------------- Google Sheets (optional live sync) ----------------------
 def _get_sheet():
     if not USE_SHEETS:
-        return None, {}  # <-- make sure this line exists/indented
+        return None, {}
     import gspread
     from google.oauth2.service_account import Credentials
     sa_info = st.secrets.get("gcp_service_account", None)
@@ -185,11 +195,8 @@ tab = {label: tabs[i] for i, label in enumerate(allowed_labels)}
 with tab["📝 Check-in"]:
     st.subheader("Attendee Check-in")
 
-    # Banner image under the subheader
-    try:
-        st.image(BANNER_URL, use_container_width=True)
-    except Exception:
-        pass
+    # Banner image under the subheader (Google Forms style)
+    show_banner()
 
     # query params (string or list)
     q = st.query_params
