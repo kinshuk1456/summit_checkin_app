@@ -17,28 +17,6 @@ ROOMS_CSV = "rooms.csv"
 # Turn on ONLY if you've added gspread/google-auth to requirements.txt and set secrets
 USE_SHEETS = False  # set True after secrets + deps are configured
 
-# Banner image (Google Forms style) — prefer local file, fallback to raw GitHub
-BANNER_LOCAL = "assets/bg.png"  # ensure this file exists in your repo
-BANNER_RAW   = "https://raw.githubusercontent.com/kinshuk1456/summit_checkin_app/main/assets/bg.png"
-
-def show_banner():
-    """Display the banner image right under the Check-in heading.
-    Tries local bytes first, then falls back to the raw GitHub URL.
-    """
-    try:
-        if os.path.exists(BANNER_LOCAL):
-            with open(BANNER_LOCAL, "rb") as f:
-                st.image(f.read(), use_container_width=True)
-            return
-    except Exception:
-        pass
-    # fallback to URL (add cache-buster to avoid stale)
-    try:
-        st.image(f"{BANNER_RAW}?v=1", use_container_width=True)
-    except Exception:
-        # final no-op to keep app running even if image fails
-        st.caption("")
-
 # ---------------------- Roles / modes ----------------------
 def get_mode_and_auth():
     qs = st.query_params
@@ -183,6 +161,40 @@ def _with_filter_and_sort(df: pd.DataFrame, session_filter: Optional[str]) -> pd
 def nearby_list(nearby_str: str) -> List[str]:
     return [x.strip() for x in str(nearby_str).split("|") if str(x).strip()]
 
+# ---------------------- Banner helper ----------------------
+RAW_BANNER = "https://raw.githubusercontent.com/kinshuk1456/summit_checkin_app/main/assets/bg.png"
+
+def _find_banner_path() -> Optional[str]:
+    """Return a local assets image path if found."""
+    # Prefer exact bg.(png|jpg), else pick any png/jpg in assets/
+    candidates = []
+    for folder in ("assets", "Assets", "asset", "static"):
+        if os.path.isdir(folder):
+            for fname in os.listdir(folder):
+                lower = fname.lower()
+                if lower in ("bg.png", "bg.jpg", "banner.png", "banner.jpg"):
+                    return os.path.join(folder, fname)
+                if lower.endswith(".png") or lower.endswith(".jpg") or lower.endswith(".jpeg"):
+                    candidates.append(os.path.join(folder, fname))
+    return candidates[0] if candidates else None
+
+def show_banner():
+    """Show an image under the Check-in heading (local first, then raw GitHub)."""
+    # 1) local
+    local_path = _find_banner_path()
+    if local_path and os.path.isfile(local_path):
+        try:
+            st.image(local_path, use_container_width=True)
+            return
+        except Exception:
+            pass
+    # 2) raw GitHub fallback (works if repo is public)
+    try:
+        st.image(RAW_BANNER + "?v=1", use_container_width=True)
+    except Exception:
+        # As a final hint, print what we found
+        st.warning("Couldn't display banner image. Make sure an image exists in the repo under /assets (e.g., assets/bg.png).")
+
 # ---------------------- Start ----------------------
 init_db()
 rooms_df = load_rooms()
@@ -203,9 +215,7 @@ tab = {label: tabs[i] for i, label in enumerate(allowed_labels)}
 # ---------------------- 📝 Check-in ----------------------
 with tab["📝 Check-in"]:
     st.subheader("Attendee Check-in")
-
-    # Banner image under the subheader (Google Forms style)
-    show_banner()
+    show_banner()  # <— displays the image here
 
     # query params (string or list)
     q = st.query_params
