@@ -196,3 +196,8 @@ if "⚙️ Admin" in tab_labels:
                     init_db()
                     st.success("Database initialized (no prior data found).")
 
+# use your exact raw URL here
+BG_URL = "http://github.com/kinshuk1456/summit_checkin_app/blob/main/assets/bg.png"
+
+if mode == "checkin":
+    set_background(BG_URL)
