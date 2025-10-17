@@ -20,6 +20,11 @@ USE_SHEETS = False  # set True after secrets + deps are configured
 # Banner image shown under the title on the Check-in tab (Google Forms style)
 BANNER_URL = "https://raw.githubusercontent.com/kinshuk1456/summit_checkin_app/main/assets/bg.png"
 
+
+with tab["📝 Check-in"]:
+    st.subheader("Attendee Check-in")
+    st.image(BANNER_URL + "?v=1", use_container_width=True)
+
 # ---------------------- Roles / modes ----------------------
 def get_mode_and_auth():
     qs = st.query_params
