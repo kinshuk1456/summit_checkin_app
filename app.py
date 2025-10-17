@@ -162,7 +162,7 @@ def nearby_list(nearby_str: str) -> List[str]:
     return [x.strip() for x in str(nearby_str).split("|") if str(x).strip()]
 
 # ---------------------- Banner helper ----------------------
-RAW_BANNER = "https://raw.githubusercontent.com/kinshuk1456/summit_checkin_app/main/assets/bg.png"
+RAW_BANNER = "https://github.com/kinshuk1456/summit_checkin_app/blob/main/assets/bg.png"
 
 def _find_banner_path() -> Optional[str]:
     """Return a local assets image path if found."""
