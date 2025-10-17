@@ -42,7 +42,7 @@ if mode == "checkin":
 # ---------------------- Google Sheets (optional live sync) ----------------------
 def _get_sheet():
     if not USE_SHEETS:
-        return None, {}
+        return None, {}  # <-- make sure this line exists/indented
     import gspread
     from google.oauth2.service_account import Credentials
     sa_info = st.secrets.get("gcp_service_account", None)
@@ -185,11 +185,11 @@ tab = {label: tabs[i] for i, label in enumerate(allowed_labels)}
 with tab["📝 Check-in"]:
     st.subheader("Attendee Check-in")
 
-    # Show banner image under the heading (Google Forms style)
+    # Banner image under the subheader
     try:
         st.image(BANNER_URL, use_container_width=True)
     except Exception:
-        pass  # if URL missing, quietly skip
+        pass
 
     # query params (string or list)
     q = st.query_params
@@ -200,12 +200,12 @@ with tab["📝 Check-in"]:
     room = _qp("room")
     session = _qp("session")
 
-    # is this a valid room/session?
+    # validate pair
     valid_pair = False
     if not rooms_df.empty and room and session:
         valid_pair = ((rooms_df["room_code"] == str(room)) & (rooms_df["session"] == str(session))).any()
 
-    # live occupancy for this room/session, suggest nearby if FULL
+    # full-room nearby suggestions
     dfc = read_checkins()
     occ_df = occupancy_counts(dfc, rooms_df, session_filter=session) if session else None
     this_row = None
