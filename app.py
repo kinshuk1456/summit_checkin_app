@@ -18,26 +18,39 @@ ROOMS_CSV = "rooms.csv"
 USE_SHEETS = False  # set True after secrets + deps are configured
 
 # Banner image (Google Forms style) — prefer local file, fallback to raw GitHub
-BANNER_LOCAL = "assets/bg.png"  # ensure this file exists in your repo
+
+import urllib.request
+from urllib.error import URLError, HTTPError
+
+BANNER_LOCAL = "assets/bg.png"
 BANNER_RAW   = "https://raw.githubusercontent.com/kinshuk1456/summit_checkin_app/main/assets/bg.png"
 
 def show_banner():
-    """Display the banner image right under the Check-in heading.
-    Tries local bytes first, then falls back to the raw GitHub URL.
-    """
+    # 1) Local file (preferred)
     try:
-        if os.path.exists(BANNER_LOCAL):
+        if os.path.isfile(BANNER_LOCAL):
             with open(BANNER_LOCAL, "rb") as f:
                 st.image(f.read(), use_container_width=True)
             return
-    except Exception:
-        pass
-    # fallback to URL (add cache-buster to avoid stale)
+        else:
+            st.info(f"Banner not found at {BANNER_LOCAL}. Trying GitHub raw URL…")
+    except Exception as e:
+        st.warning(f"Couldn’t read local image ({BANNER_LOCAL}): {e}. Trying GitHub raw URL…")
+
+    # 2) Raw GitHub URL fallback
     try:
-        st.image(f"{BANNER_RAW}?v=1", use_container_width=True)
-    except Exception:
-        # final no-op to keep app running even if image fails
-        st.caption("")
+        with urllib.request.urlopen(f"{BANNER_RAW}?v=1", timeout=10) as resp:
+            st.image(resp.read(), use_container_width=True)
+        return
+    except (HTTPError, URLError, TimeoutError) as e:
+        st.error(f"Couldn’t load banner from GitHub raw URL: {e}")
+
+    # 3) Final hint: what’s actually in /assets?
+    try:
+        files = os.listdir("assets")
+        st.warning("assets/ folder contents: " + ", ".join(files))
+    except Exception as e:
+        st.warning(f"Couldn’t list assets/ folder: {e}")
 
 # ---------------------- Roles / modes ----------------------
 def get_mode_and_auth():
