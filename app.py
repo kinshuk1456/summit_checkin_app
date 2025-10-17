@@ -18,17 +18,26 @@ ROOMS_CSV = "rooms.csv"
 USE_SHEETS = False  # set True after secrets + deps are configured
 
 # Banner image (Google Forms style) — prefer local file, fallback to raw GitHub
-BANNER_LOCAL = "assets/bg.png"
+BANNER_LOCAL = "assets/bg.png"  # ensure this file exists in your repo
 BANNER_RAW   = "https://raw.githubusercontent.com/kinshuk1456/summit_checkin_app/main/assets/bg.png"
 
 def show_banner():
-    """Display the banner image right under the Check-in heading."""
-    # Prefer local file (works even if internet is blocked)
-    if os.path.exists(BANNER_LOCAL):
-        st.image(BANNER_LOCAL, use_container_width=True)
-    else:
-        # Fallback to raw GitHub (add cache-buster to avoid stale caching)
+    """Display the banner image right under the Check-in heading.
+    Tries local bytes first, then falls back to the raw GitHub URL.
+    """
+    try:
+        if os.path.exists(BANNER_LOCAL):
+            with open(BANNER_LOCAL, "rb") as f:
+                st.image(f.read(), use_container_width=True)
+            return
+    except Exception:
+        pass
+    # fallback to URL (add cache-buster to avoid stale)
+    try:
         st.image(f"{BANNER_RAW}?v=1", use_container_width=True)
+    except Exception:
+        # final no-op to keep app running even if image fails
+        st.caption("")
 
 # ---------------------- Roles / modes ----------------------
 def get_mode_and_auth():
