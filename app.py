@@ -181,7 +181,6 @@ tab = {label: tabs[i] for i, label in enumerate(allowed_labels)}
 # ---------------------- 📝 Check-in ----------------------
 with tab["📝 Check-in"]:
     st.subheader("Attendee Check-in")
-    show_banner()  # <— displays the image here
 
     # query params (string or list)
     q = st.query_params
