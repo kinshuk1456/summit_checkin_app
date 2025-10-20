@@ -15,7 +15,7 @@ DB_PATH = "checkins.db"
 ROOMS_CSV = "rooms.csv"
 
 # Turn on ONLY if you've added gspread/google-auth to requirements.txt and set secrets
-USE_SHEETS = False  # set True after secrets + deps are configured
+USE_SHEETS = True  # set True after secrets + deps are configured
 
 # ---------------------- Roles / modes ----------------------
 def get_mode_and_auth():
