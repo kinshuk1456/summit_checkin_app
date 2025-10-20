@@ -161,40 +161,6 @@ def _with_filter_and_sort(df: pd.DataFrame, session_filter: Optional[str]) -> pd
 def nearby_list(nearby_str: str) -> List[str]:
     return [x.strip() for x in str(nearby_str).split("|") if str(x).strip()]
 
-# ---------------------- Banner helper ----------------------
-RAW_BANNER = "bg.png"
-
-def _find_banner_path() -> Optional[str]:
-    """Return a local assets image path if found."""
-    # Prefer exact bg.(png|jpg), else pick any png/jpg in assets/
-    candidates = []
-    for folder in ("assets", "Assets", "asset", "static"):
-        if os.path.isdir(folder):
-            for fname in os.listdir(folder):
-                lower = fname.lower()
-                if lower in ("bg.png", "bg.jpg", "banner.png", "banner.jpg"):
-                    return os.path.join(folder, fname)
-                if lower.endswith(".png") or lower.endswith(".jpg") or lower.endswith(".jpeg"):
-                    candidates.append(os.path.join(folder, fname))
-    return candidates[0] if candidates else None
-
-def show_banner():
-    """Show an image under the Check-in heading (local first, then raw GitHub)."""
-    # 1) local
-    local_path = _find_banner_path()
-    if local_path and os.path.isfile(local_path):
-        try:
-            st.image(local_path, use_container_width=True)
-            return
-        except Exception:
-            pass
-    # 2) raw GitHub fallback (works if repo is public)
-    try:
-        st.image(RAW_BANNER + "?v=1", use_container_width=True)
-    except Exception:
-        # As a final hint, print what we found
-        st.warning("Couldn't display banner image. Make sure an image exists in the repo under /assets (e.g., assets/bg.png).")
-
 # ---------------------- Start ----------------------
 init_db()
 rooms_df = load_rooms()
